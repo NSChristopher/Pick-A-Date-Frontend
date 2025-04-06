@@ -14,8 +14,7 @@ const EventCreateForm = () => {
     description: '',
     maxDate: null,
     minDate: null,
-    lon: null,
-    lat: null,
+    addresses: [],
   });
 
   const updateFormData = (key, value) => {
@@ -43,13 +42,26 @@ const EventCreateForm = () => {
     e.preventDefault();
 
     const payload = {
-      name: formData.eventName,
+      event_name: formData.eventName,
       description: formData.description,
-      maxDate: formData.maxDate?.toISOString().split('T')[0],
-      minDate: formData.minDate?.toISOString().split('T')[0],
-      lon: formData.lon || null,
-      lat: formData.lat || null,
+      max_date: formData.maxDate?.toISOString().split('T')[0],
+      min_date: formData.minDate?.toISOString().split('T')[0],
+      addresses: [
+        {
+          address_name: formData.addressName || '',
+          street_line_1: formData.streetLine1 || '',
+          street_line_2: formData.streetLine2 || '',
+          city: formData.city || '',
+          state_or_province: formData.state || '',
+          country_code: formData.countryCode || 'US',
+          postal_code: formData.postalCode || '',
+          latitude: formData.lat || null,
+          longitude: formData.lon || null,
+        },
+      ],
     };
+
+    console.log('Submitting event:', payload);
 
     createEventMutation.mutate(payload);
   };
@@ -89,9 +101,9 @@ const EventCreateForm = () => {
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700">Roughly when should it take place?</label>
           <CalendarRangePicker 
-            onChange={({ startDate, endDate }) => {
-              updateFormData('minDate', startDate);
-              updateFormData('maxDate', endDate);
+            onChange={({ start, end }) => {
+              updateFormData('minDate', start);
+              updateFormData('maxDate', end);
             }}
           />
         </div>
@@ -120,20 +132,48 @@ const EventCreateForm = () => {
             <SearchBox
               accessToken={MAPBOX_API_KEY}
               onRetrieve={(res) => {
-                const feature = res.features[0];
-                const lat = feature.geometry.coordinates[1];
-                const lon = feature.geometry.coordinates[0];
-                const name = feature.properties.full_address || feature.place_name;
-                setSelectedLocation({ name, lat, lon });
-                updateFormData('lon', lon);
-                updateFormData('lat', lat);
+                const feature = res.features?.[0];
+                if (!feature) return;
+              
+                const props = feature.properties || {};
+                const context = props.context || {};
+                const coords = feature.geometry?.coordinates || [];
+              
+                const addressName = feature.place_name || props.name || '';
+                const streetLine1 = context?.address?.name || props.name || '';
+                const streetLine2 = context?.neighborhood?.name || '';
+                const city = context?.place?.name || '';
+                const stateOrProvince = context?.region?.name || context?.region?.region_code || '';
+                const postalCode = context?.postcode?.name || '';
+                const countryCode = context?.country?.country_code || 'US';
+              
+                const lat = coords[1] ?? null;
+                const lon = coords[0] ?? null;
+              
+                const location = {
+                  addressName,
+                  streetLine1,
+                  streetLine2,
+                  city,
+                  stateOrProvince,
+                  postalCode,
+                  countryCode,
+                  lat,
+                  lon,
+                };
+              
+                setSelectedLocation(location);
+              
+                for (const [key, val] of Object.entries(location)) {
+                  updateFormData(key, val);
+                }
               }}
               options={{ country: ['us'] }}
-              value={selectedLocation ? selectedLocation.name : ''}
+              value={selectedLocation ? selectedLocation.addressName : ''}
             />
             {selectedLocation && (
               <div className="text-sm text-gray-700 mt-2">
-                <p><strong>Selected:</strong> {selectedLocation.name}</p>
+                <p><strong>Selected:</strong> {selectedLocation.addressName}</p>
                 <p>Lat: {selectedLocation.lat}</p>
                 <p>Lon: {selectedLocation.lon}</p>
               </div>

@@ -12,9 +12,10 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'https://urban-space-fiesta-4v7jprjvrqqcj46j-5000.app.github.dev',
+        target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '') //TODO remove this and add api prefix to the backend
       },
     },
   }

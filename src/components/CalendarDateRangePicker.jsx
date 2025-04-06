@@ -18,20 +18,31 @@ const getMonthDays = (monthOffset = 0) => {
   return { days, monthLabel: today.format("MMMM"), leadingEmptyDays };
 };
 
-const CalendarRangePicker = () => {
+const CalendarRangePicker = ({ onChange }) => {
   const [monthOffset, setMonthOffset] = useState(0);
   const [range, setRange] = useState({ start: null, end: null });
 
   const handleDateClick = (date) => {
+    let newRange;
+  
     if (!range.start || (range.start && range.end)) {
-      setRange({ start: date, end: null });
+      newRange = { start: date, end: null };
     } else if (date.isBefore(range.start)) {
-      setRange({ start: date, end: range.start });
+      newRange = { start: date, end: range.start };
     } else {
-      setRange({ ...range, end: date });
+      newRange = { ...range, end: date };
+    }
+  
+    setRange(newRange);
+  
+    if (onChange && newRange.start && newRange.end) {
+      onChange({ 
+        start: newRange.start.toDate(),
+        end: newRange.end.toDate(),
+      });
     }
   };
-
+  
   const isInRange = (day) => {
     if (range.start && range.end) {
       return day.isAfter(range.start.subtract(1, "day")) && day.isBefore(range.end.add(1, "day"));
