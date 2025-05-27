@@ -3,10 +3,13 @@ import CalendarRangePicker from './CalendarDateRangePicker';
 import { SearchBox } from '@mapbox/search-js-react';
 import { useMutation } from '@tanstack/react-query';
 import api from '../utils/axios';
+import { useNavigate } from 'react-router-dom';
 
 const MAPBOX_API_KEY = 'pk.eyJ1Ijoibm9haC1kZXYtb3V0bG9vayIsImEiOiJjbThrdHdkbGkwYzQ5MmxxMHJhMXY3ZzljIn0.Y6RovEfSGO69MqWHXAOmyg'; // replace this with your Mapbox token
 
 const EventCreateForm = () => {
+  
+  const navigate = useNavigate();
 
   // State for form submission
   const [formData, setFormData] = useState({
@@ -26,12 +29,13 @@ const EventCreateForm = () => {
 
   const createEventMutation = useMutation({
     mutationFn: async (payload) => {
-      const res = await api.post('/events/event', payload);
+      const res = await api.post('/events', payload);
       return res.data;
     },
     onSuccess: (data) => {
       console.log('Event created successfully:', data);
       setCreatedEvent(data);
+      navigate(`/event/${data.data.token}`); // Redirect to the event page
     },
     onError: (error) => {
       console.error('Error creating event:', error);
@@ -60,8 +64,6 @@ const EventCreateForm = () => {
         },
       ],
     };
-
-    console.log('Submitting event:', payload);
 
     createEventMutation.mutate(payload);
   };
