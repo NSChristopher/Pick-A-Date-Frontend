@@ -5,8 +5,7 @@ import CalendarView from '../views/CalendarView'
 const HomePage = () => {
   return (
     <>
-      <CalendarView />
-      {/* <EventCreateForm /> */}
+      <EventCreateForm />
     </>
   )
 }
